@@ -17,6 +17,7 @@
 #include <QFont>
 #include <QFrame>
 #include <QGridLayout>
+#include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QInputDialog>
@@ -82,6 +83,14 @@ TodoWindow::TodoWindow(QWidget *parent) : QMainWindow(parent) {
     syncFloatingFocus();
 }
 
+void TodoWindow::applySoftShadow(QWidget *widget, int blur, int yOffset, int alpha) {
+    auto *shadow = new QGraphicsDropShadowEffect(widget);
+    shadow->setBlurRadius(blur);
+    shadow->setOffset(0, yOffset);
+    shadow->setColor(QColor(74, 84, 128, alpha));
+    widget->setGraphicsEffect(shadow);
+}
+
 void TodoWindow::changeEvent(QEvent *event) {
     QMainWindow::changeEvent(event);
     if (event->type() == QEvent::WindowStateChange && isMinimized()) {
@@ -97,7 +106,7 @@ void TodoWindow::closeEvent(QCloseEvent *event) {
 QWidget *TodoWindow::createSidebar() {
     auto *sidebar = new QFrame();
     sidebar->setObjectName("Sidebar");
-    sidebar->setFixedWidth(238);
+    sidebar->setFixedWidth(268);
     auto *layout = new QVBoxLayout(sidebar);
     layout->setContentsMargins(22, 18, 18, 18);
     layout->setSpacing(10);
@@ -173,6 +182,7 @@ QWidget *TodoWindow::createSidebar() {
 QWidget *TodoWindow::createTasksPanel() {
     auto *panel = new QFrame();
     panel->setObjectName("Panel");
+    applySoftShadow(panel, 26, 8, 16);
     auto *layout = new QVBoxLayout(panel);
     layout->setContentsMargins(20, 18, 20, 18);
     layout->setSpacing(14);
@@ -236,6 +246,8 @@ QWidget *TodoWindow::createTasksPanel() {
 QWidget *TodoWindow::createMetricCard(const QString &title, const QString &value, const QString &caption, const QString &accent) {
     auto *card = new QFrame();
     card->setObjectName("MetricCard");
+    card->setMinimumHeight(118);
+    applySoftShadow(card, 24, 8, 18);
     auto *layout = new QVBoxLayout(card);
     layout->setContentsMargins(16, 14, 16, 14);
     layout->setSpacing(7);
@@ -311,7 +323,7 @@ QWidget *TodoWindow::createDashboardPanel() {
 QWidget *TodoWindow::createDetailPanel() {
     auto *panel = new QFrame();
     panel->setObjectName("DetailPanel");
-    panel->setFixedWidth(318);
+    panel->setFixedWidth(356);
     auto *layout = new QVBoxLayout(panel);
     layout->setContentsMargins(22, 24, 22, 20);
     layout->setSpacing(14);
@@ -376,6 +388,7 @@ QWidget *TodoWindow::createDetailPanel() {
 QWidget *TodoWindow::createFocusPanel() {
     auto *panel = new QFrame();
     panel->setObjectName("FocusPanel");
+    applySoftShadow(panel, 22, 6, 14);
     auto *layout = new QVBoxLayout(panel);
     layout->setContentsMargins(16, 14, 16, 14);
     layout->setSpacing(10);
@@ -455,6 +468,7 @@ QWidget *TodoWindow::createFocusPanel() {
 QWidget *TodoWindow::createSchedulePanel() {
     auto *panel = new QFrame();
     panel->setObjectName("Panel");
+    applySoftShadow(panel, 24, 8, 14);
     auto *layout = new QVBoxLayout(panel);
     layout->setContentsMargins(20, 18, 20, 18);
     layout->setSpacing(12);
@@ -495,6 +509,7 @@ QWidget *TodoWindow::createSchedulePanel() {
 QWidget *TodoWindow::createCalendarPanel() {
     auto *panel = new QFrame();
     panel->setObjectName("Panel");
+    applySoftShadow(panel, 22, 7, 14);
     auto *layout = new QVBoxLayout(panel);
     layout->setContentsMargins(18, 16, 18, 16);
     layout->setSpacing(10);
@@ -732,9 +747,10 @@ void TodoWindow::updateTaskRowWidget(QListWidgetItem *item) {
 
     auto *row = new QWidget();
     row->setObjectName("TaskRow");
+    applySoftShadow(row, 18, 4, 12);
     auto *layout = new QHBoxLayout(row);
-    layout->setContentsMargins(12, 8, 12, 8);
-    layout->setSpacing(10);
+    layout->setContentsMargins(14, 7, 14, 7);
+    layout->setSpacing(12);
 
     auto *check = new QCheckBox();
     check->setChecked(item->checkState() == Qt::Checked);
@@ -742,7 +758,7 @@ void TodoWindow::updateTaskRowWidget(QListWidgetItem *item) {
 
     auto *title = new QLabel(item->text());
     title->setObjectName(item->checkState() == Qt::Checked ? "TaskTitleDone" : "TaskTitle");
-    title->setMinimumWidth(220);
+    title->setMinimumWidth(260);
     layout->addWidget(title, 1);
 
     const QDate dueDate = QDate::fromString(item->data(DueDateRole).toString(), Qt::ISODate);
@@ -750,7 +766,7 @@ void TodoWindow::updateTaskRowWidget(QListWidgetItem *item) {
     const int estimate = item->data(EstimateMinutesRole).toInt();
     const bool urgent = dueDate.isValid() && dueDate <= QDate::currentDate();
 
-    auto *priority = new QLabel(urgent ? "紧急" : "普通");
+    auto *priority = new QLabel(urgent ? "紧急" : "计划");
     priority->setObjectName(urgent ? "ChipUrgent" : "ChipSoft");
     layout->addWidget(priority);
 
@@ -758,7 +774,10 @@ void TodoWindow::updateTaskRowWidget(QListWidgetItem *item) {
     categoryChip->setObjectName(category == "工作" ? "ChipWork" : "ChipStudy");
     layout->addWidget(categoryChip);
 
-    QString dueText = dueDate.isValid() ? dueDate.toString("M月d日") : "未定";
+    QString dueText = dueDate.isValid() ? dueDate.toString("今天 M月d日") : "未定";
+    if (dueDate.isValid() && dueDate != QDate::currentDate()) {
+        dueText = dueDate.toString("M月d日");
+    }
     auto *time = new QLabel(QString("%1  %2分钟").arg(dueText).arg(estimate));
     time->setObjectName("TaskTime");
     layout->addWidget(time);
@@ -1384,21 +1403,21 @@ void TodoWindow::saveTasks() {
 void TodoWindow::applyStyle() {
     setStyleSheet(R"(
         QMainWindow {
-            background: #ffffff;
+            background: #f7f8fc;
         }
         QLabel {
-            color: #24273a;
+            color: #1f2337;
         }
         #Sidebar {
-            background: #f4f6ff;
-            border-right: 1px solid #edf0f8;
+            background: #f5f7ff;
+            border-right: 1px solid #edf1fb;
         }
         #Dashboard {
-            background: #ffffff;
+            background: #fcfdff;
         }
         #DetailPanel {
-            background: #fbfcff;
-            border-left: 1px solid #edf0f8;
+            background: #ffffff;
+            border-left: 1px solid #edf1f7;
         }
         #Brand {
             color: #252844;
@@ -1406,12 +1425,12 @@ void TodoWindow::applyStyle() {
             font-weight: 800;
         }
         #NewTaskButton {
-            background: #5865f2;
-            border: 1px solid #5865f2;
-            border-radius: 8px;
+            background: #5262f5;
+            border: 1px solid #5262f5;
+            border-radius: 9px;
             color: #ffffff;
             font-weight: 700;
-            padding: 13px 12px;
+            padding: 14px 14px;
             text-align: left;
         }
         #NewTaskButton:hover {
@@ -1420,17 +1439,17 @@ void TodoWindow::applyStyle() {
         #NavButton, #NavActive {
             background: transparent;
             border: none;
-            border-radius: 7px;
-            color: #555c78;
-            padding: 9px 8px;
+            border-radius: 10px;
+            color: #586075;
+            padding: 10px 11px;
             text-align: left;
         }
         #NavButton:hover {
             background: #eef1ff;
         }
         #NavActive {
-            background: #edf0ff;
-            color: #4e5de1;
+            background: #eef2ff;
+            color: #5262f5;
             font-weight: 700;
         }
         #SidebarSection, #SidebarList, #SidebarFooter, #Profile {
@@ -1461,7 +1480,7 @@ void TodoWindow::applyStyle() {
         }
         #Panel, #FocusPanel {
             background: #ffffff;
-            border: 1px solid #eef1f8;
+            border: 1px solid rgba(232, 236, 247, 170);
             border-radius: 14px;
         }
         #FocusPanel {
@@ -1469,15 +1488,15 @@ void TodoWindow::applyStyle() {
         }
         #MetricCard {
             background: #ffffff;
-            border: 1px solid #eef1f8;
-            border-radius: 14px;
+            border: 1px solid rgba(232, 236, 247, 160);
+            border-radius: 16px;
         }
         #MetricTitle, #Filter {
             color: #8d94aa;
             font-size: 12px;
         }
         #MetricValue {
-            font-size: 23px;
+            font-size: 24px;
             font-weight: 800;
         }
         #FilterActive {
@@ -1492,7 +1511,7 @@ void TodoWindow::applyStyle() {
         }
         #DetailTitle {
             color: #20233c;
-            font-size: 18px;
+            font-size: 19px;
             font-weight: 800;
         }
         #DetailMeta {
@@ -1511,9 +1530,9 @@ void TodoWindow::applyStyle() {
             color: #edf0f5;
         }
         #FocusTask {
-            background: #f5f7ff;
-            border: 1px solid #e0e5ff;
-            border-radius: 8px;
+            background: #f6f8ff;
+            border: 1px solid #e3e7ff;
+            border-radius: 12px;
             color: #5361c7;
             font-size: 13px;
             font-weight: 700;
@@ -1545,8 +1564,8 @@ void TodoWindow::applyStyle() {
         }
         QLineEdit, QSpinBox {
             background: #ffffff;
-            border: 1px solid #e6e9f1;
-            border-radius: 7px;
+            border: 1px solid #e7ebf4;
+            border-radius: 9px;
             color: #343958;
             font-size: 13px;
             padding: 8px 10px;
@@ -1555,9 +1574,9 @@ void TodoWindow::applyStyle() {
             border-color: #8792f7;
         }
         QPushButton {
-            background: #f7f8fc;
-            border: 1px solid #e6e9f1;
-            border-radius: 7px;
+            background: #f8f9fe;
+            border: 1px solid #e7ebf4;
+            border-radius: 9px;
             color: #596078;
             font-size: 13px;
             font-weight: 700;
@@ -1567,12 +1586,12 @@ void TodoWindow::applyStyle() {
             background: #eef1ff;
         }
         QPushButton#PrimaryButton {
-            background: #5865f2;
-            border-color: #5865f2;
+            background: #5262f5;
+            border-color: #5262f5;
             color: #ffffff;
         }
         QPushButton#PrimaryButton:hover {
-            background: #4957e8;
+            background: #4657ea;
         }
         QPushButton:disabled {
             background: #f7f8fb;
@@ -1602,8 +1621,8 @@ void TodoWindow::applyStyle() {
         }
         QWidget#TaskRow {
             background: #ffffff;
-            border: 1px solid #eef1f8;
-            border-radius: 12px;
+            border: 1px solid rgba(236, 239, 248, 160);
+            border-radius: 14px;
         }
         #TaskTitle {
             color: #272b43;
@@ -1649,6 +1668,17 @@ void TodoWindow::applyStyle() {
         #StarOff {
             color: #b7bdcc;
             font-size: 18px;
+        }
+        QCheckBox::indicator {
+            width: 18px;
+            height: 18px;
+            border-radius: 5px;
+            border: 1px solid #d9deea;
+            background: #ffffff;
+        }
+        QCheckBox::indicator:checked {
+            background: #5262f5;
+            border: 1px solid #5262f5;
         }
         QTableWidget::item:selected {
             background: #eef1ff;

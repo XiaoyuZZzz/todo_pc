@@ -40,6 +40,7 @@ private:
     QWidget *createDashboardPanel();
     QWidget *createDetailPanel();
     QWidget *createMetricCard(const QString &title, const QString &value, const QString &caption, const QString &accent);
+    void applySoftShadow(QWidget *widget, int blur = 22, int yOffset = 8, int alpha = 22);
 
     void connectUi();
     void initDatabase();
